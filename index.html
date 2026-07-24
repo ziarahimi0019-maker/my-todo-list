@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت کارهای روزانه حرفه‌ای</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --input-border: #dddddd;
+            --item-bg: #f9f9f9;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1e1e24;
+            --card-bg: #2a2a35;
+            --text-color: #f4f7f6;
+            --input-border: #444455;
+            --item-bg: #343444;
+        }
+
+        body {
+            font-family: Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .todo-container {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 420px;
+            margin: 20px;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin: 0;
+        }
+
+        .theme-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .input-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .meta-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        input,
+        select {
+            padding: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-family: inherit;
+        }
+
+        input[type="text"] {
+            flex: 1;
+        }
+
+        .meta-inputs select,
+        .meta-inputs input {
+            flex: 1;
+            width: 50%;
+        }
+
+        button#addBtn {
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        .filter-section {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            padding: 12px;
+            background: var(--item-bg);
+            border: 1px solid var(--input-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 5px;
+            margin-bottom: 8px;
+        }
+
+        .task-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .task-text {
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        .task-meta {
+            font-size: 11px;
+            opacity: 0.7;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .badge {
+            background: #007bff;
+            color: white;
+            padding: 1px 6px;
+            border-radius: 3px;
+        }
+
+        .countdown {
+            color: #fd7e14;
+            font-weight: bold;
+        }
+
+        .expired {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        li.completed .task-text {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 5px;
+        }
+
+        .edit-btn,
+        .delete-btn {
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .edit-btn {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="todo-container">
+        <div class="header-section">
+            <h2>کارهای روزانه</h2>
+            <button id="themeToggle" class="theme-btn">🌙</button>
+        </div>
+
+        <div class="input-form">
+            <input type="text" id="taskInput" placeholder="کار جدید را وارد کنید...">
+            <div class="meta-inputs">
+                <select id="categoryInput">
+                    <option value="شخصی">👤 شخصی</option>
+                    <option value="کاری">💼 کاری</option>
+                    <option value="درسی">📚 درسی</option>
+                </select>
+                <input type="datetime-local" id="deadlineInput">
+            </div>
+            <button id="addBtn">افزودن کار جدید</button>
+        </div>
+
+        <div class="filter-section">
+            <label>فیلتر بر اساس:</label>
+            <select id="filterCategory">
+                <option value="همه">همه کارها</option>
+                <option value="شخصی">شخصی</option>
+                <option value="کاری">کاری</option>
+                <option value="درسی">درسی</option>
+            </select>
+        </div>
+
+        <ul id="taskList"></ul>
+    </div>
+    <script>
+        const taskInput = document.getElementById('taskInput');
+        const categoryInput = document.getElementById('categoryInput');
+        const deadlineInput = document.getElementById('deadlineInput');
+        const addBtn = document.getElementById('addBtn');
+        const taskList = document.getElementById('taskList');
+        const themeToggle = document.getElementById('themeToggle');
+        const filterCategory = document.getElementById('filterCategory');
+
+        let countdownInterval;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTasks();
+            loadTheme();
+            // بروزرسانی زمان‌سنج‌ها هر ۱ ثانیه
+            countdownInterval = setInterval(updateAllCountdowns, 1000);
+        });
+
+        addBtn.addEventListener('click', addTask);
+        filterCategory.addEventListener('change', filterTasks);
+
+        // ایجاد بوق صوتی دیجیتال ملایم
+        function playSound(type) {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sine';
+            // فرکانس بالا برای موفقیت، فرکانس پایین برای حذف
+            osc.frequency.value = type === 'success' ? 600 : 300;
+
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start();
+            osc.stop(ctx.currentTime + 0.2);
+        }
+
+        function addTask() {
+            const text = taskInput.value.trim();
+            const category = categoryInput.value;
+            const deadline = deadlineInput.value;
+
+            if (text === '') return alert('لطفاً عنوان کار را وارد کنید!');
+
+            createTaskElement(text, category, deadline, false);
+            saveTasks();
+            playSound('success');
+
+            taskInput.value = '';
+            deadlineInput.value = '';
+        }
+
+        function createTaskElement(text, category, deadline, isCompleted) {
+            const li = document.createElement('li');
+            li.setAttribute('data-category', category);
+            li.setAttribute('data-deadline', deadline);
+            if (isCompleted) li.classList.add('completed');
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'task-info';
+
+            const textSpan = document.createElement('span');
+            textSpan.className = 'task-text';
+            textSpan.innerText = text;
+
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'task-meta';
+
+            const catBadge = document.createElement('span');
+            catBadge.className = 'badge';
+            catBadge.innerText = category;
+            metaDiv.appendChild(catBadge);
+
+            if (deadline) {
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'countdown';
+                metaDiv.appendChild(timeSpan);
+            }
+
+            infoDiv.appendChild(textSpan);
+            infoDiv.appendChild(metaDiv);
+
+            infoDiv.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'BUTTON') {
+                    li.classList.toggle('completed');
+                    saveTasks();
+                    if (li.classList.contains('completed')) playSound('success');
+                }
+            });
+
+            const actionDiv = document.createElement('div');
+            actionDiv.className = 'action-btns';
+
+            const editBtn = document.createElement('button');
+            editBtn.innerText = 'ویرایش';
+            editBtn.className = 'edit-btn';
+            editBtn.addEventListener('click', () => {
+                const newText = prompt('ویرایش کار:', textSpan.innerText);
+                if (newText && newText.trim() !== '') {
+                    textSpan.innerText = newText.trim();
+                    saveTasks();
+                }
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerText = 'حذف';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.addEventListener('click', () => {
+                playSound('delete');
+                li.remove();
+                saveTasks();
+            });
+
+            actionDiv.appendChild(editBtn);
+            actionDiv.appendChild(deleteBtn);
+
+            li.appendChild(infoDiv);
+            li.appendChild(actionDiv);
+            taskList.appendChild(li);
+
+            updateCountdown(li);
+            filterTasks();
+        }
+
+        function updateCountdown(li) {
+            const deadlineAttr = li.getAttribute('data-deadline');
+            if (!deadlineAttr) return;
+
+            const countdownSpan = li.querySelector('.countdown');
+            if (!countdownSpan) return;
+
+            const targetDate = new Date(deadlineAttr).getTime();
+            const now = new Date().getTime();
+            const diff = targetDate - now;
+
+            if (li.classList.contains('completed')) {
+                countdownSpan.innerText = '✓ انجام شده';
+                countdownSpan.className = 'countdown';
+                return;
+            }
+
+            if (diff <= 0) {
+                countdownSpan.innerText = '⚠️ زمان به پایان رسید!';
+                countdownSpan.className = 'countdown expired';
+            } else {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                let timeString = '⏳ ';
+                if (days > 0) timeString += `${days}روز `;
+                timeString += `${hours}:${minutes}:${seconds}`;
+
+                countdownSpan.innerText = timeString;
+                countdownSpan.className = 'countdown';
+            }
+        }
+
+        function updateAllCountdowns() {
+            document.querySelectorAll('#taskList li').forEach(updateCountdown);
+        }
+
+        function saveTasks() {
+            const tasks = [];
+            document.querySelectorAll('#taskList li').forEach(li => {
+                tasks.push({
+                    text: li.querySelector('.task-text').innerText,
+                    category: li.getAttribute('data-category'),
+                    deadline: li.getAttribute('data-deadline') || '',
+                    completed: li.classList.contains('completed')
+                });
+            });
+            localStorage.setItem('ultimateTasks', JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+            const tasks = JSON.parse(localStorage.getItem('ultimateTasks')) || [];
+            tasks.forEach(task => createTaskElement(task.text, task.category, task.deadline, task.completed));
+        }
+
+        function filterTasks() {
+            const selected = filterCategory.value;
+            document.querySelectorAll('#taskList li').forEach(li => {
+                if (selected === 'همه' || li.getAttribute('data-category') === selected) {
+                    li.style.display = 'flex';
+                } else {
+                    li.style.display = 'none';
+                }
+            });
+        }
+
+        // مدیریت تم تاریک
+        themeToggle.addEventListener('click', () => {
+            if (document.body.getAttribute('data-theme') === 'dark') {
+                document.body.removeAttribute('data-theme');
+                themeToggle.innerText = '🌙';
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.body.setAttribute('data-theme', 'dark');
+                themeToggle.innerText = '☀️';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        function loadTheme() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+                themeToggle.innerText = '☀️';
+            }
+        }
+
+    </script>
+</body>
+
+</html>
